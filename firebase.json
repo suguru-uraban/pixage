@@ -1,0 +1,33 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "functions": {
+    "source": "functions"
+  },
+  "hosting": {
+    "public": "src/static",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "renderer",
+          "region": "asia-northeast1"
+        }
+      },
+      {
+        "source": "**",
+        "function": "fbEnv"
+      }
+    ]
+  },
+  "storage": {
+    "rules": "storage.rules"
+  }
+}

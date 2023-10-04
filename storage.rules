@@ -1,0 +1,88 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ログインしているかどうかのチェック
+    function isAuthenticated() {
+        return request.auth != null
+    }
+
+    // ログインしていて、かつユーザーが本人かのチェック
+    function isUserAuthenticated(userId) {
+        return isAuthenticated() && request.auth.uid == userId
+    }
+
+    // プロフィール画像のバリデーション
+    function isValidPicture(picture) {
+        return picture.size <= 200 * 1024
+          && picture.contentType.matches('image/.*')
+    }
+
+    // サムネイル画像のバリデーション
+    function isValidThumbnail(thumbnail) {
+        return thumbnail.size <= 500 * 1024
+          && thumbnail.contentType.matches('image/jpeg')
+    }
+
+    // 作品画像のバリデーション
+    function isValidWorks(work) {
+        return work.size <= 500 * 1024
+          && work.contentType.matches('image/jpeg')
+    }
+
+    // 自動投稿のバリデーション
+    function isValidPostWork(postWork) {
+        return postWork.size <= 200 * 1024 * 1024
+        	&& postWork.contentType.matches('application/zip|application/x-zip-compressed')
+    }
+
+    // コミッション作例のバリデーション
+    function isValidCommissions(commissions) {
+        return commissions.size <= 500 * 1024
+        	&& commissions.contentType.matches('image/jpeg|image/jpg|image/png')
+    }
+
+    match /picture/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow create: if isUserAuthenticated(userId)
+        && isValidPicture(request.resource)
+      allow update: if isUserAuthenticated(userId)
+        && isValidPicture(request.resource)
+      allow delete: if isAuthenticated()
+    }
+
+    match /thumbnail/{workId}/{allPaths=**} {
+      allow read: if true;
+      allow create: if isAuthenticated()
+        && isValidThumbnail(request.resource)
+      allow update: if isAuthenticated()
+        && isValidThumbnail(request.resource)
+      allow delete: if isAuthenticated()
+    }
+
+    match /works/{workId}/{allPaths=**} {
+      allow read: if true;
+      allow create: if isAuthenticated()
+        && isValidWorks(request.resource)
+      allow update: if isAuthenticated()
+        && isValidWorks(request.resource)
+      allow delete: if isAuthenticated()
+    }
+
+    match /postWork/{postWorkId}/{allPaths=**} {
+      allow read: if true;
+      allow create: if isAuthenticated()
+      	&& isValidPostWork(request.resource)
+      allow delete: if isAuthenticated()
+    }
+
+    match /commissions/{commissionId}/{allPaths=**} {
+      allow read: if true;
+      allow create: if isAuthenticated()
+        && isValidCommissions(request.resource)
+      allow update: if isAuthenticated()
+        && isValidCommissions(request.resource)
+      allow delete: if isAuthenticated()
+    }
+  }
+}

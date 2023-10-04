@@ -1,0 +1,19 @@
+// フェードイン・フェードアウト
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s;
+}
+.fade-enter,
+.fade-leave-to {
+  opacity: 0;
+}
+
+// BGカラー
+.bg-enter-active,
+.bg-leave-active {
+  transition: background-color 0.2s;
+}
+.bg-enter,
+.bg-leave-to {
+  background-color: $background-color-gray-transparent;
+}

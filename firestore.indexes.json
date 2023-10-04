@@ -1,0 +1,113 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "works",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "release",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "official",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "workId",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "works",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "release",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "official",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "updatedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "works",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "release",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "official",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "popular",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "commissions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "release",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "commissionType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "commissionId",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "commissions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "release",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "commissionType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "updatedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "commissions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "release",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "commissionType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "popular",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

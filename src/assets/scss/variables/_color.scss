@@ -1,0 +1,81 @@
+// 背景色
+$background-color-default: #25282e;
+$background-color-default-opacity: rgba(37, 40, 46, 0.9);
+$background-color-header: #101214;
+$background-color-gray: #8b96ad;
+$background-color-gray-opacity: rgba(98, 106, 122, 0.9);
+$background-color-gray-transparent: rgba(98, 106, 122, 0);
+$background-color-gray-admin-hover: rgba(98, 106, 122, 0.2);
+$background-color-gray-hover: rgba(98, 106, 122, 0.4);
+$background-color-gray-opaque: rgba(98, 106, 122, 1);
+$background-color-lightgray-opacity: rgba(189, 196, 209, 0.9);
+$background-color-darkgray-opacity: rgba(56, 57, 61, 0.9);
+$background-color-darkgray-block-opacity: rgba(56, 57, 61, 0.7);
+$background-color-dark: #6d6d6d;
+$background-color-overlay: rgba(37, 40, 46, 0.8);
+$background-color-white: #ffffff;
+$background-color-pink: #fae2e7;
+$background-color-red: #fc3e61;
+$background-color-whiteLead: #f6f7f8;
+$background-color-iceGreen: #d5ead8;
+$background-color-opalGreen: #bee0ce;
+$background-color-sunshineYellow: #ffedab;
+$background-color-twitter: #1da1f2;
+
+// フォント色（アイコン含む）
+$font-color-black: #424852;
+$font-color-white: #ffffff;
+$font-color-gray: #626a7a;
+$font-color-lightgray: #8b96ad;
+$font-color-lighterGray: #e0e0e0;
+$font-color-darkgray: #424852;
+$font-color-dark: #6d6d6d;
+$font-color-carmine: #d7003a;
+$font-color-red: #fc3e61;
+$font-color-lemon: #ffcd00;
+$font-color-green: #008000;
+$font-color-orange: #ffa500;
+
+// 罫線色
+$border-color-white: #ffffff;
+$border-color-lightgray: #8b96ad;
+$border-color-gray: #626a7a;
+$border-color-darkgray: #424852;
+$border-color-dark: #6d6d6d;
+$border-color-red: #e6002a;
+$border-color-lemon: #ffcd00;
+$border-color-green: #008000;
+
+// 影色
+$shadow-color: rgba(0, 0, 0, 0.25);
+
+// 光彩色
+$glow-color: rgba(255, 255, 255, 0.25);
+
+// ランキング
+$ranking-color-first: #b8a856;
+$ranking-color-second: #9b9c9c;
+$ranking-color-third: #bc6942;
+$ranking-color-under: #cfced0;
+
+// アイコン
+$icon-color-favorite: #eb6eb2;
+
+// ボタン
+$button-color-singUp-bg: linear-gradient(#ff6600, #8d3800);
+$button-color-singUp-border: #423322;
+$button-color-normal-bg: linear-gradient(#ffffff, #cccccc);
+$button-color-normal-border: #424852;
+$button-color-metal-bg: linear-gradient(#ffffff, #8b96ad);
+$button-color-metal-border: #8b96ad;
+$button-color-metal-on-bg: linear-gradient(#cccccc, #747d91);
+$button-color-metal-on-border: #8b96ad;
+$button-color-danger-on-bg: linear-gradient(#f76868, #b90606);
+$button-color-danger-on-border: #690101;
+
+// Flushカラー
+$flush-color-success: rgba(37, 181, 18, 0.8);
+$flush-color-error: rgba(181, 18, 34, 0.8);
+
+// マイページ専用クリアカラー
+$myPage-color-opacity: rgba(84, 84, 84, 0.2);

@@ -1,0 +1,726 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ログインしているかどうかのチェック
+    function isAuthenticated() {
+        return request.auth != null
+    }
+
+    // ログインしていて、かつユーザーが本人かのチェック
+    function isUserAuthenticated(userId) {
+        return isAuthenticated() && request.auth.uid == userId
+    }
+
+    // メール認証状態のチェック
+    function isVerified() {
+        return (get(/databases/$(database)/documents/usersSecretData/$(request.auth.uid)).data.provider == 'password'
+          && request.auth.token.email_verified == true)
+          || get(/databases/$(database)/documents/usersSecretData/$(request.auth.uid)).data.provider == 'twitter.com'
+    }
+
+    // admin権限のチェック
+    function isAdmin() {
+        return isAuthenticated()
+          && get(/databases/$(database)/documents/usersSecretData/$(request.auth.uid)).data.role == 'admin'
+    }
+
+    // staff権限のチェック
+    function isStaff() {
+        return isAuthenticated()
+          && get(/databases/$(database)/documents/usersSecretData/$(request.auth.uid)).data.role == 'staff'
+    }
+
+    // クリエイター数データのスキーマ検証
+    function isValidCreatorsCountSchema(creatorsCount) {
+        return creatorsCount.size() == 4
+        && 'count' in creatorsCount && creatorsCount.count is number
+        && 'createdAt' in creatorsCount && creatorsCount.createdAt is timestamp
+        && 'serialNumber' in creatorsCount && creatorsCount.serialNumber is number
+        && 'updatedAt' in creatorsCount && creatorsCount.updatedAt is timestamp
+    }
+
+    // クリエイター数データのバリデーション
+    function isValidCreatorsCount(creatorsCount) {
+        return creatorsCount.count >= 0
+        && creatorsCount.serialNumber >= 0
+    }
+
+    // 自動投稿データのスキーマ検証
+    function isValidPostWorkSchema(postWork) {
+        return postWork.size() == 21
+        && 'createdAt' in postWork && postWork.createdAt is timestamp
+        && 'displayName' in postWork && postWork.displayName is string
+        && 'email' in postWork && postWork.email is string
+        && 'isCreator' in postWork && postWork.isCreator is string
+        && 'creatorId' in postWork && postWork.creatorId is number
+        && 'isCreatorForCollaborator' in postWork && postWork.isCreatorForCollaborator is string
+        && 'collaborator' in postWork && postWork.collaborator is string
+        && 'isExisting' in postWork && postWork.isExisting is bool
+        && 'workTitle' in postWork && postWork.workTitle is string
+        && 'workDescription' in postWork && postWork.workDescription is string
+        && 'genre' in postWork && postWork.genre is string
+        && 'episodeNum' in postWork && postWork.episodeNum is string
+        && 'episodeTitle' in postWork && postWork.episodeTitle is string
+        && 'episodePrice' in postWork && postWork.episodePrice is number
+        && 'currency' in postWork && postWork.currency is string
+        && 'memo' in postWork && postWork.memo is string
+        && 'fileName' in postWork && postWork.fileName is string
+        && 'fileSize' in postWork && postWork.fileSize is string
+        && 'fileUrl' in postWork && postWork.fileUrl is string
+        && 'uid' in postWork && postWork.uid is string
+        && 'updatedAt' in postWork && postWork.updatedAt is timestamp
+    }
+
+    // 自動投稿データのバリデーション
+    function isValidPostWork(postWork) {
+        return postWork.displayName.size() <= 50
+        && postWork.email.matches('^$|[\\w\\-._]+@[\\w\\-._]+\\.[A-Za-z]+')
+        && postWork.isCreator.matches('notCreator|all|storyOnly|drawingOnly|commissionOnly')
+        && postWork.isCreatorForCollaborator.matches('notCollaborator|storyOnly|drawingOnly')
+        && postWork.collaborator.size() <= 50
+        && postWork.workTitle.size() <= 50
+        && postWork.workDescription.size() <= 250
+        && postWork.genre.matches('異世界|恋愛|青春|BL|百合|SF|ファンタジー|ギャグ|アクション|ホラー|ミステリー|スポーツ|グルメ|ビジネス|歴史|時代劇|日常|バイオレンス|ノンフィクション')
+        && postWork.episodeNum.size() <= 20
+        && postWork.episodeTitle.size() <= 50
+        && 0 <= postWork.episodePrice
+        && postWork.episodePrice <= 99999
+        && postWork.currency.matches('¥')
+        && postWork.memo.size() <= 300
+        && postWork.fileName.size() <= 54
+    }
+
+    // 自動投稿データ > ダウンロードログのスキーマ検証
+    function isValidDownloadLogSchema(downloadLog) {
+        return downloadLog.size() == 3
+        && 'createdAt' in downloadLog && downloadLog.createdAt is timestamp
+        && 'adminEmail' in downloadLog && downloadLog.adminEmail is string
+        && 'updatedAt' in downloadLog && downloadLog.updatedAt is timestamp
+    }
+
+    // 自動投稿データ > ダウンロードログのバリデーション
+    function isValidDownloadLog(downloadLog) {
+        return downloadLog.adminEmail.matches('^$|[\\w\\-._]+@[\\w\\-._]+\\.[A-Za-z]+')
+    }
+
+    // 自動投稿データ > 削除ログのスキーマ検証
+    function isValidDeleteLogSchema(deleteLog) {
+        return deleteLog.size() == 3
+        && 'createdAt' in deleteLog && deleteLog.createdAt is timestamp
+        && 'adminEmail' in deleteLog && deleteLog.adminEmail is string
+        && 'updatedAt' in deleteLog && deleteLog.updatedAt is timestamp
+    }
+
+    // 自動投稿データ > 削除ログのバリデーション
+    function isValidDeleteLog(deleteLog) {
+        return deleteLog.adminEmail.matches('^$|[\\w\\-._]+@[\\w\\-._]+\\.[A-Za-z]+')
+    }
+
+    // ユーザー数データのスキーマ検証
+    function isValidUsersCountSchema(usersCount) {
+        return usersCount.size() == 3
+        && 'count' in usersCount && usersCount.count is number
+        && 'createdAt' in usersCount && usersCount.createdAt is timestamp
+        && 'updatedAt' in usersCount && usersCount.updatedAt is timestamp
+    }
+
+    // ユーザー数データのバリデーション
+    function isValidUsersCount(usersCount) {
+        return usersCount.count >= 0
+    }
+
+    // 公開ユーザーデータのスキーマ検証
+    function isValidUsersPublicDataSchema(userPublic) {
+        return userPublic.size() == 7
+        && 'createdAt' in userPublic && userPublic.createdAt is timestamp
+        && 'creatorId' in userPublic && userPublic.creatorId is number
+        && 'displayName' in userPublic && userPublic.displayName is string
+        && 'isActive' in userPublic && userPublic.isActive is bool
+        && 'isCreator' in userPublic && userPublic.isCreator is string
+        && 'picture' in userPublic && userPublic.picture is string
+        && 'updatedAt' in userPublic && userPublic.updatedAt is timestamp
+    }
+
+    // 公開ユーザーデータのバリデーション
+    function isValidUsersPublicData(userPublic) {
+        return userPublic.displayName.size() <= 50
+        && userPublic.isCreator.matches('notCreator|all|storyOnly|drawingOnly|commissionOnly')
+    }
+
+    // 公開ユーザーデータ > PRのスキーマ検証
+    function isValidPrSchema(pr) {
+        return pr.size() == 3
+        && 'createdAt' in pr && pr.createdAt is timestamp
+        && 'pr' in pr && pr.pr is string
+        && 'updatedAt' in pr && pr.updatedAt is timestamp
+    }
+
+    // 公開ユーザーデータ > PRのバリデーション
+    function isValidPr(pr) {
+        return pr.pr.size() <= 250
+    }
+
+    // 非公開ユーザーデータのスキーマ検証
+    function isValidUsersSecretDataSchema(userSecret) {
+        return userSecret.size() == 13
+        && 'availableFreePoint' in userSecret && userSecret.availableFreePoint is number
+        && 'availablePaidPoint' in userSecret && userSecret.availablePaidPoint is number
+        && 'createdAt' in userSecret && userSecret.createdAt is timestamp
+        && 'email' in userSecret && userSecret.email is string
+        && 'emailDomain' in userSecret && userSecret.emailDomain is string
+        && 'firstName' in userSecret && userSecret.firstName is string
+        && 'language' in userSecret && userSecret.language is string
+        && 'lastName' in userSecret && userSecret.lastName is string
+        && 'provider' in userSecret && userSecret.provider is string
+        && 'receivedPoint' in userSecret && userSecret.receivedPoint is number
+        && 'role' in userSecret && userSecret.role is string
+        && 'uid' in userSecret && userSecret.uid is string
+        && 'updatedAt' in userSecret && userSecret.updatedAt is timestamp
+    }
+
+    // 非公開ユーザーデータのバリデーション
+    function isValidUsersSecretData(userSecret, userId) {
+        return userSecret.email.matches('^$|[\\w\\-._]+@[\\w\\-._]+\\.[A-Za-z]+')
+        && userSecret.emailDomain.matches('^$|[\\w\\-._]+\\.[A-Za-z]+')
+        && userSecret.firstName.size() <= 50
+        && userSecret.language.matches('ja')
+        && userSecret.lastName.size() <= 50
+        && userSecret.provider.matches('password|twitter.com')
+        && userSecret.role.matches('guest|user|staff|admin')
+        && userSecret.uid.matches(userId)
+    }
+
+    // 非公開ユーザー > お気に入りデータのスキーマ検証
+    function isValidFavoriteWorksSchema(favoriteWork) {
+        return favoriteWork.size() == 3
+        && 'createdAt' in favoriteWork && favoriteWork.createdAt is timestamp
+        && 'updatedAt' in favoriteWork && favoriteWork.updatedAt is timestamp
+        && 'workId' in favoriteWork && favoriteWork.workId is number
+    }
+
+    // 非公開ユーザー > いいねデータのスキーマ検証
+    function isValidLikesSchema(like) {
+        return like.size() == 4
+        && 'createdAt' in like && like.createdAt is timestamp
+        && 'episodeId' in like && like.episodeId is number
+        && 'updatedAt' in like && like.updatedAt is timestamp
+        && 'workId' in like && like.workId is number
+    }
+
+    // 非公開ユーザー > 受取り口座情報のスキーマ検証
+    function isValidReceivableAccountSchema(receivableAccount) {
+        return receivableAccount.size() == 7
+        && 'createdAt' in receivableAccount && receivableAccount.createdAt is timestamp
+        && 'accountName' in receivableAccount && receivableAccount.accountName is string
+        && 'financialInstitutionName' in receivableAccount && receivableAccount.financialInstitutionName is string
+        && 'branchName' in receivableAccount && receivableAccount.branchName is string
+        && 'accountNumber' in receivableAccount && receivableAccount.accountNumber is string
+        && 'phoneNumber' in receivableAccount && receivableAccount.phoneNumber is string
+        && 'updatedAt' in receivableAccount && receivableAccount.updatedAt is timestamp
+    }
+
+    // 非公開ユーザー > 受取り口座情報ののバリデーション
+    function isValidReceivableAccount(receivableAccount) {
+        return receivableAccount.accountName.matches('^[ァ-ー]+$')
+        && receivableAccount.accountName.size() <= 100
+        && receivableAccount.financialInstitutionName.size() <= 50
+        && receivableAccount.branchName.size() <= 50
+        && receivableAccount.accountNumber.matches('^[0-9]+$')
+        && receivableAccount.accountNumber.size() <= 8
+        && receivableAccount.phoneNumber.matches('^[0-9]+$')
+        && receivableAccount.phoneNumber.size() <= 11
+    }
+
+    // 非公開ユーザー > 前月の支払額のスキーマ検証
+    function isValidMontlySaleSchema(MontlySale) {
+        return MontlySale.size() == 5
+        && 'createdAt' in MontlySale && MontlySale.createdAt is timestamp
+        && 'price' in MontlySale && MontlySale.price is number
+        && 'done' in MontlySale && MontlySale.done is bool
+        && 'official' in MontlySale && MontlySale.official is bool
+        && 'updatedAt' in MontlySale && MontlySale.updatedAt is timestamp
+    }
+
+    // コミッション作成のスキーマ検証
+    function isValidCommissionSchema(commission) {
+        return commission.size() == 13
+        && 'createdAt' in commission && commission.createdAt is timestamp
+        && 'email' in commission && commission.email is string
+        && 'creatorId' in commission && commission.creatorId is number
+        && 'commissionId' in commission && commission.commissionId is number
+        && 'commissionType' in commission && commission.commissionType is string
+        && 'approval' in commission && commission.approval is bool
+        && 'release' in commission && commission.release is bool
+        && 'favorite' in commission && commission.favorite is number
+        && 'like' in commission && commission.like is number
+        && 'popular' in commission && commission.like is number
+        && 'requestCount' in commission && commission.requestCount is number
+        && 'uid' in commission && commission.uid is string
+        && 'updatedAt' in commission && commission.updatedAt is timestamp
+    }
+
+    // コミッション作成のバリデーション
+    function isValidCommission(commission) {
+        return commission.email.matches('^$|[\\w\\-._]+@[\\w\\-._]+\\.[A-Za-z]+')
+        && commission.commissionType.matches('comic|cosplay|anime|illust')
+    }
+
+    // コミッション作成 > 言語別データのスキーマ検証
+    function isValidCommissionDataSchema(commissionData) {
+        return commissionData.size() == 9
+        && 'createdAt' in commissionData && commissionData.createdAt is timestamp
+        && 'commissionTitle' in commissionData && commissionData.commissionTitle is string
+        && 'commissionPrice' in commissionData && commissionData.commissionPrice is number
+        && 'currency' in commissionData && commissionData.currency is string
+        && 'commissionDescription' in commissionData && commissionData.commissionDescription is string
+        && 'workPeriod' in commissionData && commissionData.workPeriod is number
+        && 'acceptDetail' in commissionData && commissionData.acceptDetail is bool
+        && 'images' in commissionData && commissionData.images is list
+        && 'updatedAt' in commissionData && commissionData.updatedAt is timestamp
+    }
+
+    // コミッション作成 > 言語別データのバリデーション
+    function isValidCommissionData(commissionData) {
+        return commissionData.commissionTitle.size() <= 50
+        && 0 <= commissionData.commissionPrice
+        && commissionData.commissionPrice <= 999999
+        && commissionData.currency.matches('¥')
+        && commissionData.commissionDescription.size() <= 2000
+        && commissionData.images.size() <= 2
+
+    }
+
+    // 作品データのスキーマ検証
+    function isValidWorksSchema(work) {
+        return work.size() == 15
+        && 'createdAt' in work && work.createdAt is timestamp
+        && 'creatorAllId' in work && work.creatorAllId is number
+        && 'creatorDrawingId' in work && work.creatorDrawingId is number
+        && 'creatorStoryId' in work && work.creatorStoryId is number
+        && 'episodeCount' in work && work.episodeCount is number
+        && 'episodeSerialNumber' in work && work.episodeSerialNumber is number
+        && 'favorite' in work && work.favorite is number
+        && 'language' in work && work.language is list
+        && 'official' in work && work.official is bool
+        && 'popular' in work && work.popular is number
+        && 'release' in work && work.release is bool
+        && 'searchCreatorId' in work && work.searchCreatorId is list
+        && 'totalLike' in work && work.totalLike is number
+        && 'updatedAt' in work && work.updatedAt is timestamp
+        && 'workId' in work && work.workId is number
+    }
+
+    // 作品データのバリデーション
+    function isValidWorks(work) {
+        return work.language.hasAny(['ja'])
+        && work.searchCreatorId.size() == 3
+    }
+
+    // 作品 > 言語別データのスキーマ検証
+    function isValidLangDataSchema(langData) {
+        return langData.size() == 6
+        && 'createdAt' in langData && langData.createdAt is timestamp
+        && 'genre' in langData && langData.genre is string
+        && 'thumbnail' in langData && langData.thumbnail is string
+        && 'updatedAt' in langData && langData.updatedAt is timestamp
+        && 'workDescription' in langData && langData.workDescription is string
+        && 'workTitle' in langData && langData.workTitle is string
+    }
+
+    // 作品 > 言語別データのバリデーション
+    function isValidLangData(langData) {
+        return langData.genre.matches('異世界|恋愛|青春|BL|百合|SF|ファンタジー|ギャグ|アクション|ホラー|ミステリー|スポーツ|グルメ|ビジネス|歴史|時代劇|日常|バイオレンス|ノンフィクション')
+        && langData.workDescription.size() <= 250
+        && langData.workTitle.size() <= 50
+    }
+
+    // 作品 > 言語別 > 各話データのスキーマ検証
+    function isValidLangEpisodeDataSchema(langEpisodeData) {
+        return langEpisodeData.size() == 8
+        && 'createdAt' in langEpisodeData && langEpisodeData.createdAt is timestamp
+        && 'episodeId' in langEpisodeData && langEpisodeData.episodeId is number
+        && 'episodeNum' in langEpisodeData && langEpisodeData.episodeNum is string
+        && 'episodeTitle' in langEpisodeData && langEpisodeData.episodeTitle is string
+        && 'episodePrice' in langEpisodeData && langEpisodeData.episodePrice is number
+        && 'like' in langEpisodeData && langEpisodeData.like is number
+        && 'release' in langEpisodeData && langEpisodeData.release is bool
+        && 'updatedAt' in langEpisodeData && langEpisodeData.updatedAt is timestamp
+    }
+
+    // 作品 > 言語別 > 各話データのバリデーション
+    function isValidLangEpisodeData(langData) {
+        return langData.episodeNum.size() <= 20
+        && langData.episodeTitle.size() <= 50
+        && langData.episodePrice >= 0
+    }
+
+    // 作品 > 言語別 > 画像データのスキーマ検証
+    function isValidLangImagesDataSchema(langImagesData) {
+        return langImagesData.size() == 3
+        && 'createdAt' in langImagesData && langImagesData.createdAt is timestamp
+        && 'images' in langImagesData && langImagesData.images is list
+        && 'updatedAt' in langImagesData && langImagesData.updatedAt is timestamp
+    }
+
+    // 作品 > 言語別 > 画像データのバリデーション
+    function isValidLangImagesData(langImagesData) {
+        return langImagesData.images.size() <= 50
+    }
+
+    // 作品数データのスキーマ検証
+    function isValidWorksCountSchema(worksCount) {
+        return worksCount.size() == 4
+        && 'count' in worksCount && worksCount.count is number
+        && 'createdAt' in worksCount && worksCount.createdAt is timestamp
+        && 'serialNumber' in worksCount && worksCount.serialNumber is number
+        && 'updatedAt' in worksCount && worksCount.updatedAt is timestamp
+    }
+
+    // 作品数データのバリデーション
+    function isValidWorksCount(worksCount) {
+        return worksCount.count >= 0
+        && worksCount.serialNumber >= 0
+    }
+
+    // コミッション数データのスキーマ検証
+    function isValidCommissionsCountSchema(commissionsCount) {
+        return commissionsCount.size() == 4
+        && 'count' in commissionsCount && commissionsCount.count is number
+        && 'createdAt' in commissionsCount && commissionsCount.createdAt is timestamp
+        && 'serialNumber' in commissionsCount && commissionsCount.serialNumber is number
+        && 'updatedAt' in commissionsCount && commissionsCount.updatedAt is timestamp
+    }
+
+    // コミッション数データのバリデーション
+    function isValidCommissionsCount(commissionsCount) {
+        return commissionsCount.count >= 0
+        && commissionsCount.serialNumber >= 0
+    }
+
+    match /creatorsCount/global {
+      allow get: if true;
+      allow update: if (isAuthenticated() || isAdmin() || isStaff())
+        && isValidCreatorsCountSchema(request.resource.data)
+        && isValidCreatorsCount(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    match /deletedUsers/{deletedUserId} {
+      allow create: if isAdmin() || isStaff()
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    match /postWork/{postWorkId} {
+    	allow read: if isAdmin() || isStaff();
+      allow create: if isAuthenticated()
+      	&& isValidPostWorkSchema(request.resource.data)
+        && isValidPostWork(request.resource.data)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if isAuthenticated()
+      	&& isValidPostWorkSchema(request.resource.data)
+        && isValidPostWork(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+
+      match /download/{downloadId} {
+        allow read: if isAdmin() || isStaff()
+        allow create: if isAdmin() || isStaff()
+          && isValidDownloadLogSchema(request.resource.data)
+          && isValidDownloadLog(request.resource.data)
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.updatedAt == request.time;
+      }
+
+      match /delete/{deleteId} {
+        allow read: if isAdmin() || isStaff()
+        allow create: if isAdmin() || isStaff()
+          && isValidDeleteLogSchema(request.resource.data)
+          && isValidDeleteLog(request.resource.data)
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.updatedAt == request.time;
+      }
+    }
+
+    match /usersCount/global {
+      allow get: if true;
+      allow update: if isValidUsersCountSchema(request.resource.data)
+        && isValidUsersCount(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    match /usersPublicData/{userId} {
+      allow read: if true;
+      allow create: if isValidUsersPublicDataSchema(request.resource.data)
+        && isValidUsersPublicData(request.resource.data)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if (isUserAuthenticated(userId) || isAdmin() || isStaff())
+        && isValidUsersPublicDataSchema(request.resource.data)
+        && isValidUsersPublicData(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if isAdmin() || isStaff()
+
+      match /creator/{creatorId} {
+        allow read: if true;
+        allow create: if isUserAuthenticated(userId)
+          && isVerified()
+          && isValidPrSchema(request.resource.data)
+          && isValidPr(request.resource.data)
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.updatedAt == request.time;
+        allow update: if isUserAuthenticated(userId)
+          && isVerified()
+          && isValidPrSchema(request.resource.data)
+          && isValidPr(request.resource.data)
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.updatedAt == request.time;
+        allow delete: if isAdmin() || isStaff()
+      }
+    }
+
+    match /usersSecretData/{userId} {
+      allow read: if isUserAuthenticated(userId) || isAdmin() || isStaff();
+      allow create: if isValidUsersSecretDataSchema(request.resource.data)
+        && isValidUsersSecretData(request.resource.data, userId)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if (isUserAuthenticated(userId) || isAdmin() || isStaff())
+        && isValidUsersSecretDataSchema(request.resource.data)
+        && isValidUsersSecretData(request.resource.data, userId)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if isAdmin() || isStaff()
+
+      match /favoriteWorks/{favoriteWorkId} {
+        allow read: if (isUserAuthenticated(userId) && isVerified()) || isAdmin() || isStaff()
+        allow create: if isUserAuthenticated(userId)
+          && isVerified()
+          && isValidFavoriteWorksSchema(request.resource.data)
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.updatedAt == request.time;
+        allow delete: if (isUserAuthenticated(userId) && isVerified()) || isAdmin() || isStaff()
+      }
+
+      match /likes/{likeId} {
+        allow read: if (isUserAuthenticated(userId) && isVerified()) || isAdmin() || isStaff()
+        allow create: if isUserAuthenticated(userId)
+          && isVerified()
+          && isValidLikesSchema(request.resource.data)
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.updatedAt == request.time;
+        allow delete: if isAdmin() || isStaff()
+      }
+
+      match /receivableAccount/{receivableAccountId} {
+        allow read: if (isUserAuthenticated(userId) && isVerified()) || isAdmin() || isStaff()
+        allow create: if isUserAuthenticated(userId)
+          && isVerified()
+          && isValidReceivableAccountSchema(request.resource.data)
+          && isValidReceivableAccount(request.resource.data)
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.updatedAt == request.time;
+        allow update: if isUserAuthenticated(userId)
+          && isVerified()
+          && isValidReceivableAccountSchema(request.resource.data)
+          && isValidReceivableAccount(request.resource.data)
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.updatedAt == request.time;
+        allow delete: if isAdmin() || isStaff()
+      }
+
+      match /monthlySale/{monthlySaleId} {
+        allow read: if (isUserAuthenticated(userId) && isVerified()) || isAdmin() || isStaff()
+        allow update: if (isAdmin() || isStaff())
+          && isVerified()
+          && isValidMontlySaleSchema(request.resource.data)
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.updatedAt == request.time;
+        allow delete: if isAdmin() || isStaff()
+      }
+    }
+
+    match /workImages/{workId}/{lang}/{episodeId} {
+      allow read: if isAuthenticated() && isVerified();
+      allow create: if (isAdmin() || isStaff())
+        && isValidLangImagesDataSchema(request.resource.data)
+        && isValidLangImagesData(request.resource.data)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if (isAdmin() || isStaff())
+        && isValidLangImagesDataSchema(request.resource.data)
+        && isValidLangImagesData(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if isAdmin() || isStaff()
+    }
+
+    match /commissions/{path=**} {
+    	allow read: if true;
+    }
+
+    match /commissions/{workId} {
+      allow create: if (isAuthenticated() || isAdmin() || isStaff())
+        && isValidCommissionSchema(request.resource.data)
+        && isValidCommission(request.resource.data)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if (isAuthenticated() || isAdmin() || isStaff())
+        && isValidCommissionSchema(request.resource.data)
+        && isValidCommission(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if isAdmin() || isStaff()
+
+				match /{lang}/{dataAndSale} {
+        	allow delete: if isAdmin() || isStaff()
+        }
+
+        match /{lang}/data {
+          allow create: if (isAuthenticated() || isAdmin() || isStaff())
+            && isValidCommissionDataSchema(request.resource.data)
+            && isValidCommissionData(request.resource.data)
+            && request.resource.data.createdAt == request.time
+            && request.resource.data.updatedAt == request.time;
+          allow update: if (isAuthenticated() || isAdmin() || isStaff())
+            && isValidCommissionDataSchema(request.resource.data)
+            && isValidCommissionData(request.resource.data)
+            && request.resource.data.createdAt == resource.data.createdAt
+            && request.resource.data.updatedAt == request.time;
+          allow delete: if isAdmin() || isStaff()
+        }
+
+        match /{lang}/sales {
+          allow read: if (isAuthenticated() || isAdmin() || isStaff())
+          allow create: if false
+          allow update: if false
+          allow delete: if isAdmin() || isStaff()
+
+          match /{commissionData}/{saleData} {
+            allow read: if (isAuthenticated() || isAdmin() || isStaff())
+            allow create: if false
+            allow update: if false
+            allow delete: if isAdmin() || isStaff()
+          }
+        }
+    }
+
+    match /works/{path=**} {
+    	allow read: if true;
+    }
+
+    match /works/{workId} {
+      allow create: if (isAdmin() || isStaff())
+        && isValidWorksSchema(request.resource.data)
+        && isValidWorks(request.resource.data)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if (isAuthenticated() || isAdmin() || isStaff())
+        && isValidWorksSchema(request.resource.data)
+        && isValidWorks(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if isAdmin() || isStaff()
+
+				match /{lang}/{dataAndSale} {
+        	allow delete: if isAdmin() || isStaff()
+        }
+
+        match /{lang}/data {
+          allow create: if (isAdmin() || isStaff())
+            && isValidLangDataSchema(request.resource.data)
+            && isValidLangData(request.resource.data)
+            && request.resource.data.createdAt == request.time
+            && request.resource.data.updatedAt == request.time;
+          allow update: if (isAuthenticated() || isAdmin() || isStaff())
+            && isValidLangDataSchema(request.resource.data)
+            && isValidLangData(request.resource.data)
+            && request.resource.data.createdAt == resource.data.createdAt
+            && request.resource.data.updatedAt == request.time;
+          allow delete: if isAdmin() || isStaff()
+
+            match /episode/{episodeId} {
+              allow create: if (isAdmin() || isStaff())
+                && isValidLangEpisodeDataSchema(request.resource.data)
+                && isValidLangEpisodeData(request.resource.data)
+                && request.resource.data.createdAt == request.time
+                && request.resource.data.updatedAt == request.time;
+              allow update: if (isAuthenticated() || isAdmin() || isStaff())
+                && isValidLangEpisodeDataSchema(request.resource.data)
+                && isValidLangEpisodeData(request.resource.data)
+                && request.resource.data.createdAt == resource.data.createdAt
+                && request.resource.data.updatedAt == request.time;
+              allow delete: if isAdmin() || isStaff()
+            }
+        }
+
+        match /{lang}/sales {
+          allow read: if (isAuthenticated() || isAdmin() || isStaff())
+          allow create: if false
+          allow update: if false
+          allow delete: if isAdmin() || isStaff()
+
+          match /{episodeData}/{saleData} {
+            allow read: if (isAuthenticated() || isAdmin() || isStaff())
+            allow create: if false
+            allow update: if false
+            allow delete: if isAdmin() || isStaff()
+          }
+        }
+    }
+
+    match /worksCount/global {
+      allow get: if true;
+      allow update: if (isAuthenticated() || isAdmin() || isStaff())
+        && isValidWorksCountSchema(request.resource.data)
+        && isValidWorksCount(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    match /commissionsCount/global {
+      allow get: if true;
+      allow create: if (isAuthenticated() || isAdmin() || isStaff())
+        && isValidCommissionsCountSchema(request.resource.data)
+        && isValidCommissionsCount(request.resource.data)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if (isAuthenticated() || isAdmin() || isStaff())
+        && isValidCommissionsCountSchema(request.resource.data)
+        && isValidCommissionsCount(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    match /customers/{uid} {
+      allow read: if isUserAuthenticated(uid);
+
+      match /checkout_sessions/{id} {
+        allow read, write: if isUserAuthenticated(uid);
+      }
+      match /subscriptions/{id} {
+        allow read: if isUserAuthenticated(uid);
+      }
+      match /payments/{id} {
+        allow read: if isUserAuthenticated(uid);
+      }
+    }
+
+    match /products/{id} {
+      allow read: if true;
+
+      match /prices/{id} {
+        allow read: if true;
+      }
+
+      match /tax_rates/{id} {
+        allow read: if true;
+      }
+    }
+  }
+}

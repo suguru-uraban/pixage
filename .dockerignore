@@ -1,0 +1,12 @@
+/src
+.babelrc
+.editorconfig
+.prettierrc
+.eslintrc.js
+firebase.json
+firestore.indexes.json
+firestore.rules
+jest.config.js
+README.md
+storage.rules
+yarn.lock
