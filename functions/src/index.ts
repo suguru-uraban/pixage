@@ -10,7 +10,7 @@ const f = functions.region('asia-northeast1')
 const firestore = admin.firestore()
 
 // SendGridのAPIキー
-const sendGridApiKey = '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'
+const sendGridApiKey = 'xxxxxxxx'
 
 // 最低決済金額の定数
 const minimumPayment = 1500
